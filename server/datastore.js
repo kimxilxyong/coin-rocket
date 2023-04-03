@@ -27,6 +27,13 @@ export const closeDatabase = () => {
   databaseIsOpen = false;
 };
 
+export const sortDatabase = () => {
+  // Sort the coins list by score increase
+  db.data.coins.sort((coinA, coinB) => {
+    return coinB.score - coinA.score;
+  });
+};
+
 export const getAllCoins = () => {
   if (!databaseIsOpen) throw('Database is not open');
 

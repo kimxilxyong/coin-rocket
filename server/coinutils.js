@@ -2,12 +2,14 @@
 import CoinGecko from "./coingecko-api-fetch/index.js";
 //const CoinGecko = require('./coingecko-api-fetch');
 
-import { isDatabaseOpen, openDatabase, closeDatabase, getAllCoins, getCoin, flush, addCoin } from "./datastore.js";
+import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, getAllCoins, getCoin, flush, addCoin } from "./datastore.js";
 //const AddCoin = require("./datastore.js");
 
 
 //2. Initiate the CoinGecko API Client
 const CoinGeckoClient = new CoinGecko();
+
+let page = 0;
 
 // Load details about the coins
 // page is the page number, one page has 100 entries, ordered by marketcap
@@ -25,9 +27,8 @@ const fetchCoinTopListAsync = async (page) => {
 };
 
 //fetchCoinTopListAsync(10).catch((e) => { console.error(e); }).then((coins) => {
-const getCurrentCoinTopList = async (days) => {
+const getCurrentCoinTopList = async (page, days) => {
   var i = 0;
-  var page = 10;
   var result = {
     code: 0,
     coinsTopList: []
@@ -79,7 +80,7 @@ const getCurrentCoinTopList = async (days) => {
 
 
 function fetchGecko() {
-  getCurrentCoinTopList(30).catch(err => console.log(err)).then((results) => {
+  getCurrentCoinTopList(page, 30).catch(err => console.log(err)).then((results) => {
     if (results.code == 200) {
       if (!isDatabaseOpen()) openDatabase();
       let i = 0;
@@ -91,13 +92,28 @@ function fetchGecko() {
         }
         //console.log(coin);
       });
-      console.log("[", new Date().toISOString(), "] ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
+      console.log("[", new Date().toISOString(), "] Page:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
+
+      if (i == 0) {
+        page = 9;
+        sortDatabase();
+        setTimeout(fetchGecko, 1000 * 60 * 120);
+      } else {
+        page++;
+        setTimeout(fetchGecko, 1000 * 60);
+      }
+
       closeDatabase();
+
+    } else {
+      page = 9;
+      setTimeout(fetchGecko, 1000 * 60 * 120);
     }
   });
-  setTimeout(fetchGecko, 1000 * 60 * 30);
+
 }
 
+page = 9;
 setTimeout(fetchGecko, 1000);
 
 //export { getCurrentCoinTopList, fetchCoinTopListAsync};
