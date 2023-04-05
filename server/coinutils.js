@@ -42,7 +42,8 @@ const getCurrentCoinTopList = async (page, days) => {
     if (coins.code == 200) {
       coins.data.forEach((coin) => {
 
-        if (coin.price_change_percentage_24h_in_currency > 0.0 &&
+        if ((market_cap_rank) &&
+            coin.price_change_percentage_24h_in_currency > 0.0 &&
             coin.price_change_percentage_7d_in_currency > 0.0 &&
             coin.price_change_percentage_14d_in_currency > 0.0 &&
            (coin.price_change_percentage_30d_in_currency > 0.0 || days < 30)
@@ -61,8 +62,8 @@ const getCurrentCoinTopList = async (page, days) => {
       result.coinsTopList.sort((coinA, coinB) => {
         const percentsA = coinA.price_change_percentage_24h_in_currency + coinA.price_change_percentage_7d_in_currency + coinA.price_change_percentage_14d_in_currency + (days >= 30 ? coinA.price_change_percentage_30d_in_currency : 0);
         const percentsB = coinB.price_change_percentage_24h_in_currency + coinB.price_change_percentage_7d_in_currency + coinB.price_change_percentage_14d_in_currency + (days >= 30 ? coinB.price_change_percentage_30d_in_currency : 0);
-        coinA.score = parseInt(percentsA);
-        coinB.score = parseInt(percentsB);
+        coinA.score = parseInt(percentsA * coinA.total_value * coinA.current_price);
+        coinB.score = parseInt(percentsB * coinB.total_value * coinB.current_price);
         return percentsB - percentsA;
       });
     }
@@ -70,17 +71,22 @@ const getCurrentCoinTopList = async (page, days) => {
     return result;
   }
   catch (e) {
-    console.log("getCurrentCoinTopList CATCH:", e);
-    console.log("e.code", e.code);
-    console.log("e.message", e.message);
-    console.log("e.reason", e.reason);
+    //console.log("getCurrentCoinTopList CATCH:", e);
+    //console.log("e.code", e.code);
+    //console.log("e.message", e.message);
+    //console.log("e.reason", e.reason);
     throw(e);
   }
 };
 
 
 function fetchGecko() {
-  getCurrentCoinTopList(page, 30).catch(err => console.log(err)).then((results) => {
+  getCurrentCoinTopList(page, 30).catch((err) => {
+    console.log("Error while fetching page", page);
+    console.log(err);
+    setTimeout(fetchGecko, 1000 * 60 * 20);
+  }).then((results) => {
+    if (!results) return;
     if (results.code == 200) {
       if (!isDatabaseOpen()) openDatabase();
       let i = 0;
@@ -94,8 +100,8 @@ function fetchGecko() {
       });
       console.log("[", new Date().toISOString(), "] Page:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
 
-      if (i == 0) {
-        page = 9;
+      if (results.coinsTopList.length == 0) {
+        page = 1;
         sortDatabase();
         setTimeout(fetchGecko, 1000 * 60 * 120);
       } else {
@@ -106,7 +112,7 @@ function fetchGecko() {
       closeDatabase();
 
     } else {
-      page = 9;
+      page = 1;
       setTimeout(fetchGecko, 1000 * 60 * 120);
     }
   });
