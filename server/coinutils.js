@@ -42,7 +42,7 @@ const getCurrentCoinTopList = async (page, days) => {
     if (coins.code == 200) {
       coins.data.forEach((coin) => {
 
-        if ((market_cap_rank) &&
+        if ((coin.market_cap_rank && coin.total_volume && coin.circulating_supply) &&
             coin.price_change_percentage_24h_in_currency > 0.0 &&
             coin.price_change_percentage_7d_in_currency > 0.0 &&
             coin.price_change_percentage_14d_in_currency > 0.0 &&
@@ -62,8 +62,9 @@ const getCurrentCoinTopList = async (page, days) => {
       result.coinsTopList.sort((coinA, coinB) => {
         const percentsA = coinA.price_change_percentage_24h_in_currency + coinA.price_change_percentage_7d_in_currency + coinA.price_change_percentage_14d_in_currency + (days >= 30 ? coinA.price_change_percentage_30d_in_currency : 0);
         const percentsB = coinB.price_change_percentage_24h_in_currency + coinB.price_change_percentage_7d_in_currency + coinB.price_change_percentage_14d_in_currency + (days >= 30 ? coinB.price_change_percentage_30d_in_currency : 0);
-        coinA.score = parseInt(percentsA * coinA.total_value * coinA.current_price);
-        coinB.score = parseInt(percentsB * coinB.total_value * coinB.current_price);
+        coinA.score = 1 + parseInt(percentsA * (1 / ( coinA.circulating_supply / coinA.total_volume )));
+        coinB.score = 1 + parseInt(percentsB * (1 / ( coinB.circulating_supply / coinB.total_volume )));
+        //console.log(coinA.score, percentsA, coinA.total_volume, coinA.current_price);
         return percentsB - percentsA;
       });
     }
@@ -93,12 +94,13 @@ function fetchGecko() {
       results.coinsTopList.forEach((coin) => {
 
         if (addCoin(coin)) {
-          console.log("[", coin.last_updated, "]", coin.id, coin.symbol, coin.name);
+          console.log("[", getCurrentDateTime(), "]", coin.name, coin.score);
+          //console.log(coin);
           i++;
         }
         //console.log(coin);
       });
-      console.log("[", new Date().toISOString(), "] Page:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
+      console.log("[", getCurrentDateTime(), "] Page:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
 
       if (results.coinsTopList.length == 0) {
         page = 1;
@@ -119,7 +121,24 @@ function fetchGecko() {
 
 }
 
-page = 9;
+function getCurrentDateTime() {
+  let date = new Date();
+  let hour = date.getHours();
+  hour = (hour < 10 ? "0" : "") + hour;
+  let min = date.getMinutes();
+  min = (min < 10 ? "0" : "") + min;
+  let sec = date.getSeconds();
+  sec = (sec < 10 ? "0" : "") + sec;
+  let year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  month = (month < 10 ? "0" : "") + month;
+  let day = date.getDate();
+  day = (day < 10 ? "0" : "") + day;
+  return year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec;
+}
+
+
+page = 1;
 setTimeout(fetchGecko, 1000);
 
 //export { getCurrentCoinTopList, fetchCoinTopListAsync};
