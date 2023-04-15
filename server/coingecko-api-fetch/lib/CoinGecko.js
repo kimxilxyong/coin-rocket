@@ -2,12 +2,21 @@
 
 //Modules
 //const https = require('https');
-const querystring = require('querystring');
+//const querystring = require('querystring');
+import querystring from 'querystring';
 
 //Helpers
-const Utils = require('./helpers/utilities');
-const Constants = require('./helpers/constants');
-const ReturnObject = require('./helpers/ReturnObject');
+//const Utils = require('./helpers/utilities');
+import Utilities from "./helpers/utilities";
+
+const Utils = new Utilities();
+
+//const Constants = require('./helpers/constants');
+import Constants from "./helpers/constants";
+
+//const ReturnObject = require('./helpers/ReturnObject');
+import ReturnObject from "./helpers/ReturnObject";
+
 
 /**
  * @class CoinGecko
@@ -19,7 +28,7 @@ const ReturnObject = require('./helpers/ReturnObject');
  * @public
  * @version 1.0.10
  * @license MIT
- * @kind class
+* @kind class
  */
 class CoinGecko {
 
@@ -38,7 +47,7 @@ class CoinGecko {
    * @description Get cryptocurrency global data
    * @function global
    * @returns {ReturnObject}
-   */
+  */
   global() {
     const path = `/global`;
 
@@ -852,18 +861,44 @@ class CoinGecko {
         redirect: "follow", // manual, *follow, error
         referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
         //body: JSON.stringify(data), // body data type must match "Content-Type" header
-      }).catch((error) => { console.log(error); reject(error); }).then((res) => {
+      }).catch((error) => {
+        console.log(error);
+        reject(error);
+      }).then((res) => {
 
         //console.log(res);
 
-        let body = [];
-        if (res.status == 200) {
+        if (!res) {
+          reject(
+            ReturnObject(
+              false,
+              ".then called with undefined param",
+              -1,
+              ""
+            )
+          );
 
-          res.json().catch((err) => { res.status = err.status; res.statusMessage = err.message; }).then((coins) => {
-            //console.log(coins);
-            body = coins;
-            //Create return object
-            resolve(
+        } else {
+
+          let body = [];
+          if (res.status == 200) {
+
+            res.json().catch((err) => { res.status = err.status; res.statusMessage = err.message; }).then((coins) => {
+              //console.log(coins);
+              body = coins;
+              //Create return object
+              resolve(
+                ReturnObject(
+                  !(res.status < 200 || res.status >= 300),
+                  res.statusText,
+                  res.status,
+                  body
+                )
+              );
+            });
+
+          } else {
+            reject(
               ReturnObject(
                 !(res.status < 200 || res.status >= 300),
                 res.statusText,
@@ -871,20 +906,10 @@ class CoinGecko {
                 body
               )
             );
-          });
-
-        } else {
-          reject(
-            ReturnObject(
-              !(res.status < 200 || res.status >= 300),
-              res.statusText,
-              res.status,
-              body
-            )
-          );
+          }
         }
 
-      });
+    });
 
     });
   }
@@ -901,4 +926,5 @@ CoinGecko.TIMEOUT = Constants.TIMEOUT;
 
   //
 
-module.exports = exports = CoinGecko;
+//module.exports = exports = CoinGecko;
+export { CoinGecko };

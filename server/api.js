@@ -1,5 +1,6 @@
 import express from 'express';
 import morgan from "morgan";
+import { startGeckoBot, getCoinList } from './coinutils';
 
 morgan.token('statusMessage', function (req, res) { return res.statusMessage; });
 morgan.token('body', function (req, res) { return res.body; });
@@ -17,6 +18,8 @@ app.use(morgan('[:date[iso]] :remote-addr ":method :url :body" ":status :errorty
     }
   }));
 
+console.log("api.js - startGeckoBot");
+startGeckoBot();
 
 /*app.use(morgan(function (tokens, req, res) {
   return [
@@ -36,12 +39,15 @@ app.use(express.json());
 
 // Return whole historical top list
 app.get("/api/list", (req, res) => {
-  //console.log(req.params);
+  console.log(req.params);
   //console.log(req.body);
-  var Coins = [];
-  Coins.push({ id: 1, name: "Bitcoin" });
-  Coins.push({ id: 2, name: "Ethereum" });
-  res.json(Coins);
+  //var Coins = [];
+  //Coins.push({ id: 1, name: "Bitcoin" });
+  //Coins.push({ id: 2, name: "Ethereum" });
+  //res.json(Coins);
+
+  const coinList = getCoinList(0, 100);
+  res.json(coinList);
 });
 
 // Receive a current top list
@@ -64,4 +70,5 @@ app.use((err, req, res, next) => {
   res.errorType = err.type;
   next(err, req, res, next);
 });
+
 export const handler = app;

@@ -34,6 +34,25 @@ export const sortDatabase = () => {
   });
 };
 
+export const getStoredCoinList = (start, count) => {
+  if (!databaseIsOpen) throw ('Database is not open');
+  let result = [];
+
+  if (db.data.coins.length > start + count) {
+
+    for (let i = start; i < start + count; i++) {
+      result.push({
+        id: db.data.coins[i].id,
+        name: db.data.coins[i].name,
+        score: db.data.coins[i].score,
+        price: db.data.coins[i].price,
+        last_updated: db.data.coins[i].last_updated,
+      });
+    }
+  }
+  return result;
+};
+
 export const getAllCoins = () => {
   if (!databaseIsOpen) throw('Database is not open');
 
@@ -46,7 +65,7 @@ export const getCoin = (id) => {
   return db.data.coins.find(coin => coin.id === id);
 };
 
-export const flush = () => {
+export const flushDatabase = () => {
   if (databaseIsOpen) {
     db.write();  //Write the db memory to file
   } else {

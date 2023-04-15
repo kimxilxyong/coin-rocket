@@ -1,8 +1,8 @@
 //1. Import coingecko-api
-import CoinGecko from "./coingecko-api-fetch/index.js";
+import { CoinGecko } from "./coingecko-api-fetch/index.js";
 //const CoinGecko = require('./coingecko-api-fetch');
 
-import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, getAllCoins, getCoin, flush, addCoin } from "./datastore.js";
+import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, getStoredCoinList, getAllCoins, getCoin, flushDatabase, addCoin } from "./datastore.js";
 //const AddCoin = require("./datastore.js");
 
 
@@ -89,7 +89,10 @@ function fetchGecko() {
   }).then((results) => {
     if (!results) return;
     if (results.code == 200) {
-      if (!isDatabaseOpen()) openDatabase();
+
+      // TODO DEBUG remove
+      //if (!isDatabaseOpen()) openDatabase();
+
       let i = 0;
       results.coinsTopList.forEach((coin) => {
 
@@ -100,18 +103,19 @@ function fetchGecko() {
         }
         //console.log(coin);
       });
-      console.log("[", getCurrentDateTime(), "] Page:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
+      console.log("[", getCurrentDateTime(), "] **** PAGE:", page, ", ", results.coinsTopList.length, "Coins fetched, ", i, " added to database");
 
       if (results.coinsTopList.length == 0) {
         page = 1;
-        sortDatabase();
         setTimeout(fetchGecko, 1000 * 60 * 120);
+        sortDatabase();
       } else {
         page++;
         setTimeout(fetchGecko, 1000 * 60);
+        sortDatabase();
       }
 
-      closeDatabase();
+      flushDatabase();
 
     } else {
       page = 1;
@@ -137,8 +141,16 @@ function getCurrentDateTime() {
   return year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec;
 }
 
+function startGeckoBot() {
+  page = 1;
+  // Open Database
+  if (!isDatabaseOpen()) openDatabase();
+  // Kickoff fetchGecko
+  setTimeout(fetchGecko, 1000);
+}
 
-page = 1;
-setTimeout(fetchGecko, 1000);
+function getCoinList(startIndex, count) {
+  return getStoredCoinList(startIndex, count);
+}
 
-//export { getCurrentCoinTopList, fetchCoinTopListAsync};
+export { startGeckoBot, getCoinList };

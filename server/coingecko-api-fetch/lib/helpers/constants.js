@@ -82,7 +82,7 @@ const STATUS_UPDATE_CATEGORY = {
 const STATUS_UPDATE_PROJECT_TYPE = {
   COIN: 'coin',
   MARKET: 'market',
-}
+};
 
 /**
  * @description List of event types (most recent from /events/type)
@@ -95,8 +95,22 @@ const EVENT_TYPE = {
 };
 
 //
+const Constants = {
+  HOST,
+  BASE,
+  API_VERSION,
+  URI,
+  REQUESTS_PER_SECOND,
+  TIMEOUT,
+  ORDER,
+  STATUS_UPDATE_CATEGORY,
+  STATUS_UPDATE_PROJECT_TYPE,
+  EVENT_TYPE,
+};
 
-module.exports = {
+export default Constants;
+
+/*module.exports = {
   BASE,
   HOST,
   API_VERSION,
@@ -108,3 +122,4 @@ module.exports = {
   EVENT_TYPE,
   TIMEOUT,
 };
+*/
