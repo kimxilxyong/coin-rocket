@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
-		"diffEditor.codeLens": true
+		"diffEditor.codeLens": true,
+		"search.useIgnoreFiles": false
 	}
 }

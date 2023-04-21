@@ -1,5 +1,5 @@
 //1. Import coingecko-api
-import { CoinGecko } from "./coingecko-api-fetch/index.js";
+import  CoinGecko from "./coingecko-api-fetch/index.js";
 //const CoinGecko = require('./coingecko-api-fetch');
 
 import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, getStoredCoinList, getAllCoins, getCoin, flushDatabase, addCoin } from "./datastore.js";
@@ -90,8 +90,8 @@ function fetchGecko() {
     if (!results) return;
     if (results.code == 200) {
 
-      // TODO DEBUG remove
-      //if (!isDatabaseOpen()) openDatabase();
+      // Open database
+      if (!isDatabaseOpen()) openDatabase();
 
       let i = 0;
       results.coinsTopList.forEach((coin) => {
@@ -107,18 +107,20 @@ function fetchGecko() {
 
       if (results.coinsTopList.length == 0) {
         page = 1;
-        setTimeout(fetchGecko, 1000 * 60 * 120);
         sortDatabase();
+        closeDatabase();
+        setTimeout(fetchGecko, 1000 * 60 * 120);
       } else {
         page++;
         setTimeout(fetchGecko, 1000 * 60);
-        sortDatabase();
       }
-
-      flushDatabase();
 
     } else {
       page = 1;
+      if (isDatabaseOpen()) {
+        sortDatabase();
+        closeDatabase();
+      }
       setTimeout(fetchGecko, 1000 * 60 * 120);
     }
   });
@@ -149,8 +151,4 @@ function startGeckoBot() {
   setTimeout(fetchGecko, 1000);
 }
 
-function getCoinList(startIndex, count) {
-  return getStoredCoinList(startIndex, count);
-}
-
-export { startGeckoBot, getCoinList };
+export { startGeckoBot };

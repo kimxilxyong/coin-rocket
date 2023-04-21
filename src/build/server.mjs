@@ -1,10 +1,11 @@
 import * as fs from "fs";
 import { readdirSync, statSync } from "fs";
 import { resolve, join, normalize } from "path";
-import * as querystring from "querystring";
-import querystring__default from "querystring";
+import * as qs__default from "querystring";
+import qs__default__default from "querystring";
 import http from "http";
 import { handler } from "./handler.mjs";
+import "node:fs/promises";
 import "express";
 import "morgan";
 import "lowdb";
@@ -198,7 +199,7 @@ var url = function(req) {
   obj._raw = url2;
   return req._parsedUrl = obj;
 };
-const { parse: parse$3 } = querystring__default;
+const { parse: parse$3 } = qs__default__default;
 function lead(x) {
   return x.charCodeAt(0) === 47 ? x : "/" + x;
 }
@@ -348,7 +349,7 @@ function parse(req) {
       search = raw.substring(idx);
       pathname = raw.substring(0, idx);
       if (search.length > 1) {
-        query = querystring.parse(search.substring(1));
+        query = qs__default.parse(search.substring(1));
       }
     }
   }

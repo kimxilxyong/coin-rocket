@@ -1,6 +1,7 @@
+import { readFile } from 'node:fs';
 import express from 'express';
 import morgan from "morgan";
-import { startGeckoBot, getCoinList } from './coinutils';
+import { isDatabaseOpen, openDatabase, closeDatabase, getStoredCoinList } from "./datastore.js";
 
 morgan.token('statusMessage', function (req, res) { return res.statusMessage; });
 morgan.token('body', function (req, res) { return res.body; });
@@ -12,14 +13,11 @@ const app = express();
 //app.use(morgan('[:date[iso]] :remote-addr :remote-user ":method :url HTTP/:http-version" :status :statusMessage :body ":referrer" ":user-agent"',
 app.use(morgan('[:date[iso]] :remote-addr ":method :url :body" ":status :errortype :statusMessage" ":user-agent" ":referrer" :response-time ms',
   {
-    skip: function (req, res)
-    {
+    skip: function (req, res) {
       return res.statusCode < 400;
     }
   }));
 
-console.log("api.js - startGeckoBot");
-startGeckoBot();
 
 /*app.use(morgan(function (tokens, req, res) {
   return [
@@ -38,17 +36,62 @@ startGeckoBot();
 app.use(express.json());
 
 // Return whole historical top list
-app.get("/api/list", (req, res) => {
-  console.log(req.params);
-  //console.log(req.body);
-  //var Coins = [];
-  //Coins.push({ id: 1, name: "Bitcoin" });
-  //Coins.push({ id: 2, name: "Ethereum" });
-  //res.json(Coins);
+app.get("/api/list", [
+  function (req, res, next) {
+    readFile('/maybe-valid-file', 'utf-8', (err, data) => {
+      res.locals.data = data;
+      next(err);
+    });
+  },
+  function (req, res) {
+    res.locals.data = res.locals.data.split(',')[1];
+    res.send(res.locals.data);
+  }
+]);
 
-  const coinList = getCoinList(0, 100);
-  res.json(coinList);
+app.get("/api/listslice/:start/:count", (req, res, next) => {
+  readFile('./database_is_dirty.lock', (err, data) => {
+    if (!err) {
+      res.send({ status: 305, statusMessage: "Temporary Outage at " + data });
+    } else {
+
+      try {
+        console.log("Starting to fetch coins");
+        const coinList = getStoredCoinList(req.params.start, req.params.count);
+        res.json(coinList);
+      } catch (error) {
+        //next({status: 305, statusMessage: error});
+        //console.log(error);
+        next(error);
+      }
+
+    }
+  });
 });
+
+/*app.get('/api/listslice/:start/:count', [
+  async (req, res, next) => {
+    const contents = await readFile("./database_is_dirty.lock", { encoding: 'utf8' }).catch((err) => {
+      console.log(err);
+      //next("route");
+    });
+    if (contents) {
+      res.send({ status: 305, statusMessage: "Temporary Outage at " + contents });
+    } else {
+      next("route");
+    }
+  },
+  (req, res, next) => {
+    try {
+      console.log("Starting to fetch coins");
+      const coinList = getStoredCoinList(req.params.start, req.params.count);
+      res.json(coinList);
+    } catch (err) {
+      next(err);
+    }
+  }
+]);
+*/
 
 // Receive a current top list
 app.post("/api/storenewdailylist", (req, res) => {
@@ -60,15 +103,27 @@ app.post("/api/storenewdailylist", (req, res) => {
   res.json(Coins);
 });
 
+/*
 // Global error handler
 app.use((err, req, res, next) => {
   //console.log(err.message);
-  //console.log(err);
+  console.log(err);
   res.statusCode = err.status;
   res.statusMessage = err.message;
   res.body = err.body;
   res.errorType = err.type;
+  console.log(res.statusCode);
+  console.log(res.statusMessage);
   next(err, req, res, next);
 });
+*/
+
+
+app.use((err, req, res, next) => {
+  console.error(err);
+  //res.status(305).send(err);
+  next(err, req, res, next);
+});
+
 
 export const handler = app;

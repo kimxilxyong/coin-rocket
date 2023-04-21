@@ -7,15 +7,15 @@ import querystring from 'querystring';
 
 //Helpers
 //const Utils = require('./helpers/utilities');
-import Utilities from "./helpers/utilities";
+import Utilities from "./helpers/utilities.js";
 
 const Utils = new Utilities();
 
 //const Constants = require('./helpers/constants');
-import Constants from "./helpers/constants";
+import Constants from "./helpers/constants.js";
 
 //const ReturnObject = require('./helpers/ReturnObject');
-import ReturnObject from "./helpers/ReturnObject";
+import ReturnObject from "./helpers/ReturnObject.js";
 
 
 /**
@@ -927,4 +927,4 @@ CoinGecko.TIMEOUT = Constants.TIMEOUT;
   //
 
 //module.exports = exports = CoinGecko;
-export { CoinGecko };
+export default CoinGecko;
