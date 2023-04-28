@@ -1,6 +1,7 @@
 import { LowSync, JSONFileSync } from 'lowdb';
+import { copyFile, writeFile, rm } from 'node:fs';
 
-const adapter = new JSONFileSync('dbfile.json');
+const adapter = new JSONFileSync('./dbfile.json');
 const db = new LowSync(adapter);
 
 let databaseIsOpen = false;
@@ -71,6 +72,46 @@ export const flushDatabase = () => {
   } else {
     throw('Database is not open');
   }
+};
+
+export const writeDatabaseForWebApp = () => {
+  writeFile('../database_is_dirty.lock', getCurrentDateTime(), "utf8", (err) => {
+    if (err) {
+      err.step = "write dirty lock";
+      console.error(err);
+      throw (err);
+    } else {
+
+      rm("../dbfile.sorted.json", (err) => {
+        if (err) {
+          console.error("[", getCurrentDateTime(), "] ++++ Sorted data file does not exist yet");
+          //throw (err);
+        } else {
+          console.error("[", getCurrentDateTime(), "] ++++ Old sorted data file was deleted");
+        }
+
+        copyFile('./dbfile.json', '../dbfile.sorted.json', (err) => {
+          if (err) {
+            console.error(err);
+            throw (err);
+          } else {
+            console.log("[", getCurrentDateTime(), "] ++++ Sorted data file was copied");
+
+            rm("../database_is_dirty.lock", (err) => {
+              if (err) {
+                err.step = "remove dirty lock";
+                console.error(err);
+                throw (err);
+              } else {
+                console.error("[", getCurrentDateTime(), "] ++++ Lock file removed");
+              }
+            });
+          }
+        });
+
+      });
+    }
+  });
 };
 
 export const addCoin = (newcoin) => {
@@ -168,3 +209,19 @@ export const addCoin = (newcoin) => {
   }
 
 };
+
+function getCurrentDateTime() {
+  let date = new Date();
+  let hour = date.getHours();
+  hour = (hour < 10 ? "0" : "") + hour;
+  let min = date.getMinutes();
+  min = (min < 10 ? "0" : "") + min;
+  let sec = date.getSeconds();
+  sec = (sec < 10 ? "0" : "") + sec;
+  let year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  month = (month < 10 ? "0" : "") + month;
+  let day = date.getDate();
+  day = (day < 10 ? "0" : "") + day;
+  return year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec;
+}

@@ -17,7 +17,7 @@ export default {
       },
     }),
     mix({
-      handler: '../server/api.js',
+      handler: './js/api.js',
     }),
   ],
   root: SRC_DIR,

@@ -1,12 +1,7 @@
-import { readFile } from "node:fs/promises";
+import { readFile } from "node:fs";
 import express from "express";
 import morgan from "morgan";
 import { JSONFileSync, LowSync } from "lowdb";
-const adapter = new JSONFileSync("dbfile.json");
-new LowSync(adapter);
-const getStoredCoinList = (start, count) => {
-  throw "Database is not open";
-};
 morgan.token("statusMessage", function(req, res) {
   return res.statusMessage;
 });
@@ -28,7 +23,7 @@ app.use(morgan(
 app.use(express.json());
 app.get("/api/list", [
   function(req, res, next) {
-    fs.readFile("/maybe-valid-file", "utf-8", (err, data) => {
+    readFile("/maybe-valid-file", "utf-8", (err, data) => {
       res.locals.data = data;
       next(err);
     });
@@ -38,35 +33,65 @@ app.get("/api/list", [
     res.send(res.locals.data);
   }
 ]);
-app.get("/api/listslice/:start/:count", [
-  async (req, res, next) => {
-    const contents = await readFile("./database_is_dirty.lock", { encoding: "utf8" }).catch((err) => {
-      console.log(err);
-      next("route");
-    });
-    res.send({ status: 305, statusMessage: "Temporary Outage at " + contents });
-  },
-  async (req, res, next) => {
-    try {
-      const coinList = getStoredCoinList(req.params.start, req.params.count);
-      res.json(coinList);
-    } catch (err) {
-      next(err);
+app.get("/api/listslice/:start/:count", (req, res, next) => {
+  readFile("./database_is_dirty.lock", (err, data) => {
+    if (!err) {
+      res.send({ status: 305, statusMessage: "Temporary Outage at " + data });
+    } else {
+      try {
+        if (!isDatabaseOpen())
+          openDatabase();
+        console.log("Starting to fetch coins");
+        const coinList = getStoredCoinList(req.params.start, req.params.count);
+        res.json(coinList);
+      } catch (error) {
+        console.log(error);
+        next(error);
+      }
     }
-  }
-]);
+  });
+});
 app.post("/api/storenewdailylist", (req, res) => {
   var Coins = [];
   Coins.push({ id: 2, name: "Ether" });
   res.json(Coins);
 });
 app.use((err, req, res, next) => {
-  res.statusCode = err.status;
-  res.statusMessage = err.message;
-  res.body = err.body;
-  res.errorType = err.type;
+  console.error(err);
   next(err, req, res, next);
 });
+const adapter = new JSONFileSync("./dbfile.sorted.json");
+const db = new LowSync(adapter);
+let databaseIsOpen = false;
+const isDatabaseOpen = () => {
+  return databaseIsOpen;
+};
+const openDatabase = () => {
+  if (databaseIsOpen) {
+    throw "Database is already open";
+  }
+  db.read();
+  db.data = db.data || { coins: [] };
+  databaseIsOpen = true;
+  return true;
+};
+const getStoredCoinList = (start, count) => {
+  if (!databaseIsOpen)
+    throw "Database is not open";
+  let result = [];
+  if (db.data.coins.length > start + count) {
+    for (let i = start; i < start + count; i++) {
+      result.push({
+        id: db.data.coins[i].id,
+        name: db.data.coins[i].name,
+        score: db.data.coins[i].score,
+        price: db.data.coins[i].price,
+        last_updated: db.data.coins[i].last_updated
+      });
+    }
+  }
+  return result;
+};
 const handler = app;
 export {
   handler

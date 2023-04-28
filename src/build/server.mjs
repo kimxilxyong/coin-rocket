@@ -5,7 +5,7 @@ import * as qs__default from "querystring";
 import qs__default__default from "querystring";
 import http from "http";
 import { handler } from "./handler.mjs";
-import "node:fs/promises";
+import "node:fs";
 import "express";
 import "morgan";
 import "lowdb";

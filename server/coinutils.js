@@ -2,9 +2,8 @@
 import  CoinGecko from "./coingecko-api-fetch/index.js";
 //const CoinGecko = require('./coingecko-api-fetch');
 
-import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, getStoredCoinList, getAllCoins, getCoin, flushDatabase, addCoin } from "./datastore.js";
+import { isDatabaseOpen, openDatabase, closeDatabase, sortDatabase, writeDatabaseForWebApp, addCoin } from "./datastore.js";
 //const AddCoin = require("./datastore.js");
-
 
 //2. Initiate the CoinGecko API Client
 const CoinGeckoClient = new CoinGecko();
@@ -109,6 +108,7 @@ function fetchGecko() {
         page = 1;
         sortDatabase();
         closeDatabase();
+        writeDatabaseForWebApp();
         setTimeout(fetchGecko, 1000 * 60 * 120);
       } else {
         page++;
