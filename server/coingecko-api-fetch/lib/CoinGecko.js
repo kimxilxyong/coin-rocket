@@ -908,8 +908,7 @@ class CoinGecko {
             );
           }
         }
-
-    });
+      });
 
     });
   }
@@ -923,6 +922,7 @@ CoinGecko.STATUS_UPDATE_CATEGORY = Constants.STATUS_UPDATE_CATEGORY;
 CoinGecko.STATUS_UPDATE_PROJECT_TYPE = Constants.STATUS_UPDATE_PROJECT_TYPE;
 CoinGecko.EVENT_TYPE = Constants.EVENT_TYPE;
 CoinGecko.TIMEOUT = Constants.TIMEOUT;
+CoinGecko.TIMEFRAME = Constants.TIMEFRAME;
 
   //
 

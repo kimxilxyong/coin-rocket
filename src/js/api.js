@@ -50,7 +50,7 @@ app.get("/api/list", [
   }
 ]);
 
-app.get("/api/listslice/:start/:count", (req, res, next) => {
+app.get("/api/listslice/:start/:count/:timeframe", (req, res, next) => {
   readFile('./database_is_dirty.lock', (err, data) => {
     if (!err) {
       res.send({ status: 305, statusMessage: "Temporary Outage at " + data });
@@ -59,8 +59,8 @@ app.get("/api/listslice/:start/:count", (req, res, next) => {
       try {
         if (!isDatabaseOpen()) openDatabase();
         console.log("Starting to fetch coins"); console.log(req._remoteAddress); console.log(req.socket._peername); console.log(req.url);
-        const coinList = getStoredCoinList(req.params.start, req.params.count);
-        res.json(coinList);
+        const coinList = getStoredCoinList(req.params.start, req.params.count, req.params.timeframe);
+        res.json({ status: 200, coins: coinList });
       } catch (error) {
         //next({status: 305, statusMessage: error});
         console.log(error);
@@ -115,7 +115,7 @@ const closeDatabase = () => {
   databaseIsOpen = false;
 };
 
-const getStoredCoinList = (start, count) => {
+const getStoredCoinList = (start, count, timeframe) => {
   if (!databaseIsOpen) throw ('Database is not open');
   let result = [];
 
@@ -128,6 +128,8 @@ const getStoredCoinList = (start, count) => {
         score: db.data.coins[i].score,
         price: db.data.coins[i].price,
         last_updated: db.data.coins[i].last_updated,
+        current_price: db.data.coins[i].history[db.data.coins[i].history.length-1].current_price,
+        price_change_percentage_24h_in_currency: db.data.coins[i].history[db.data.coins[i].history.length-1].price_change_percentage_24h_in_currency,
       });
     }
   }

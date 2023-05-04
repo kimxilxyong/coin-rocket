@@ -94,6 +94,14 @@ const EVENT_TYPE = {
   MEETUP: 'Meetup',
 };
 
+const TIMEFRAME = {
+  DAILY: "daily",
+  WEEKLY: "weekly",
+  BIWEEKLY: "biweekly",
+  MONTHLY: "monthly",
+  EVER: "ever"
+};
+
 //
 const Constants = {
   HOST,
@@ -106,6 +114,7 @@ const Constants = {
   STATUS_UPDATE_CATEGORY,
   STATUS_UPDATE_PROJECT_TYPE,
   EVENT_TYPE,
+  TIMEFRAME,
 };
 
 export default Constants;
