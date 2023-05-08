@@ -99,7 +99,8 @@ const TIMEFRAME = {
   WEEKLY: "weekly",
   BIWEEKLY: "biweekly",
   MONTHLY: "monthly",
-  EVER: "ever"
+  F200DAY: "F200day",
+  YEARLY: "yearly,"
 };
 
 //

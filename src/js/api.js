@@ -2,6 +2,8 @@ import { readFile } from 'node:fs';
 import express from 'express';
 import morgan from "morgan";
 import { LowSync, JSONFileSync } from 'lowdb';
+//const Constants = require('./helpers/constants');
+import Constants from "./../../server/coingecko-api-fetch/lib/helpers/constants.js";
 
 
 morgan.token('statusMessage', function (req, res) { return res.statusMessage; });
@@ -50,7 +52,7 @@ app.get("/api/list", [
   }
 ]);
 
-app.get("/api/listslice/:start/:count/:timeframe", (req, res, next) => {
+app.get("/api/listslice/:requestCount/:start/:count/:timeframe/", (req, res, next) => {
   readFile('./database_is_dirty.lock', (err, data) => {
     if (!err) {
       res.send({ status: 305, statusMessage: "Temporary Outage at " + data });
@@ -59,7 +61,7 @@ app.get("/api/listslice/:start/:count/:timeframe", (req, res, next) => {
       try {
         if (!isDatabaseOpen()) openDatabase();
         console.log("Starting to fetch coins"); console.log(req._remoteAddress); console.log(req.socket._peername); console.log(req.url);
-        const coinList = getStoredCoinList(req.params.start, req.params.count, req.params.timeframe);
+        const coinList = getStoredCoinList(req.params.requestCount, req.params.start, req.params.count, req.params.timeframe);
         res.json({ status: 200, coins: coinList });
       } catch (error) {
         //next({status: 305, statusMessage: error});
@@ -115,25 +117,52 @@ const closeDatabase = () => {
   databaseIsOpen = false;
 };
 
-const getStoredCoinList = (start, count, timeframe) => {
+const getStoredCoinList = (requestCount, start, count, timeframe) => {
   if (!databaseIsOpen) throw ('Database is not open');
   let result = [];
 
-  if (db.data.coins.length > start + count) {
-
-    for (let i = start; i < start + count; i++) {
-      result.push({
-        id: db.data.coins[i].id,
-        name: db.data.coins[i].name,
-        score: db.data.coins[i].score,
-        price: db.data.coins[i].price,
-        last_updated: db.data.coins[i].last_updated,
-        current_price: db.data.coins[i].history[db.data.coins[i].history.length-1].current_price,
-        price_change_percentage_24h_in_currency: db.data.coins[i].history[db.data.coins[i].history.length-1].price_change_percentage_24h_in_currency,
-      });
-    }
+  if (db.data.coins.length <= start + count) {
+    count = db.data.coins.length - start - 1;
   }
-  return result;
+
+  db.data.coins.slice(start, start+count).forEach(coin => {
+    result.push({
+      id: coin.id,
+      name: coin.name,
+      score: coin.score,
+      price: coin.price,
+      image: coin.image,
+      last_updated: coin.last_updated,
+      current_price: coin.history[coin.history.length-1].current_price,
+      price_change_percentage_24h_in_currency: coin.history[coin.history.length - 1].price_change_percentage_24h_in_currency,
+      price_change_percentage_7d_in_currency: coin.history[coin.history.length - 1].price_change_percentage_7d_in_currency,
+      price_change_percentage_14d_in_currency: coin.history[coin.history.length - 1].price_change_percentage_14d_in_currency,
+      price_change_percentage_30d_in_currency: coin.history[coin.history.length - 1].price_change_percentage_30d_in_currency,
+      price_change_percentage_200d_in_currency: coin.history[coin.history.length - 1].price_change_percentage_200d_in_currency,
+      price_change_percentage_1y_in_currency: coin.history[coin.history.length - 1].price_change_percentage_1y_in_currency,
+    });
+  });
+
+  result.sort((a, b) => {
+    switch (timeframe) {
+      case Constants.TIMEFRAME.DAILY:
+        return b.price_change_percentage_24h_in_currency - a.price_change_percentage_24h_in_currency;
+      case Constants.TIMEFRAME.WEEKLY:
+        return b.price_change_percentage_7d_in_currency - a.price_change_percentage_7d_in_currency;
+      case Constants.TIMEFRAME.BIWEEKLY:
+        return b.price_change_percentage_14d_in_currency - a.price_change_percentage_14d_in_currency;
+      case Constants.TIMEFRAME.MONTHLY:
+        return b.price_change_percentage_30d_in_currency - a.price_change_percentage_30d_in_currency;
+      case Constants.TIMEFRAME.F200DAY:
+        return b.price_change_percentage_200d_in_currency - a.price_change_percentage_200d_in_currency;
+      case Constants.TIMEFRAME.YEARLY:
+        return b.price_change_percentage_1y_in_currency - a.price_change_percentage_1y_in_currency;
+      default:
+        return 0;
+    }
+  });
+
+  return result.slice(0, requestCount);
 };
 
 export const handler = app;

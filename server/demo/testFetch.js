@@ -1,18 +1,14 @@
+#!/usr/bin/node
 
-const TIMEFRAME = {
-  DAILY: "daily",
-  WEEKLY: "weekly",
-  BIWEEKLY: "biweekly",
-  MONTHLY: "monthly",
-  EVER: "ever"
-};
+import Constants from "./../coingecko-api-fetch/lib/helpers/constants.js";
+
 
 
 // Load the coins from the JSON Webservice
 // page is the page number, one page has 100 entries, ordered by marketcap
-const fetchCoinTopListAsync = async (start, count, timeframe = TIMEFRAME.EVER) => {
+const fetchCoinTopListAsync = async (requestCount, start, count, timeframe = TIMEFRAME.EVER) => {
 
-  const url = "http://localhost:8080/api/listslice/" + start + "/" + count + "/" + timeframe;
+  const url = "http://localhost:8080/api/listslice/" + requestCount + "/" + start + "/" + count + "/" + timeframe;
   console.log(url);
 
   // Default options are marked with *
@@ -52,9 +48,9 @@ const fetchCoinTopListAsync = async (start, count, timeframe = TIMEFRAME.EVER) =
   return (coinList);
 };
 
-
-fetchCoinTopListAsync(1, 5, TIMEFRAME.MONTHLY).catch(err => console.log(err)).then((results) => {
-  console.log(results);
+/*
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.MONTHLY).catch(err => console.log(err)).then((results) => {
+  //console.log(results);
   if (results) {
     if (results.status == 200) {
 
@@ -68,5 +64,30 @@ fetchCoinTopListAsync(1, 5, TIMEFRAME.MONTHLY).catch(err => console.log(err)).th
     console.log("Coins " + results.coins.length);
   }
 });
+*/
 
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.DAILY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.DAILY); console.log(results); }
+);
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.WEEKLY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.WEEKLY); console.log(results); }
+);
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.BIWEEKLY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.BIWEEKLY); console.log(results); }
+);
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.MONTHLY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.MONTHLY); console.log(results); }
+);
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.F200DAY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.F200DAY); console.log(results); }
+);
+fetchCoinTopListAsync(3, 1, 5000, Constants.TIMEFRAME.YEARLY)
+  .catch(err => console.log(err))
+  .then((results) => { console.log("Coins", results.coins.length, "Timeframe", Constants.TIMEFRAME.YEARLY); console.log(results); }
+);
 //export { getCurrentCoinTopList, fetchCoinTopListAsync};
